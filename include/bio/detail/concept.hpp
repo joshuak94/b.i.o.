@@ -17,7 +17,7 @@
 
 #include <seqan3/alphabet/concept.hpp>
 
-#include <bio/platform.hpp>
+#include <bio/detail/utility.hpp>
 
 namespace bio::detail
 {
@@ -44,6 +44,30 @@ concept one_of = (std::same_as<t, ts> || ...);
 template <typename t>
 concept deliberate_alphabet = seqan3::alphabet<t> && !std::integral<std::remove_cvref_t<t>>;
 //!\endcond
+
+/*!\interface   bio::detail::deliberate_alphabet <>
+ * \tparam t    The query type to compare.
+ * \brief       A seqan3::alphabet that is **not** a character or a number (any std::integral).
+ */
+//!\cond
+template <typename from_t, typename to_t>
+concept decays_to = std::same_as<std::decay_t<from_t>, to_t>;
+//!\endcond
+
+/*!\brief Pass this function a constrained functor that accepts one argument and returns std::true_type.
+ * \details
+ *
+ * See e.g. bio::seq_io::reader_options to see how this is used.
+ */
+constexpr bool lazy_concept_checker(auto fun)
+{
+    auto fallback = []<typename T = int>(auto)
+    {
+        return std::false_type{};
+    };
+    using ret_t = decltype(detail::overloaded{fallback, fun}(1));
+    return ret_t::value;
+}
 
 //!\}
 
